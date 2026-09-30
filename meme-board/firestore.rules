@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{d}/documents {
+    function signed() { return request.auth != null; }
+    function admin() { return signed() && request.auth.token.email == 'your-email@gmail.com' && request.auth.token.email_verified == true; }
+    function ok() { return signed() && !exists(/databases/$(d)/documents/banned/$(request.auth.uid)); }
+    function mp(id) { return /databases/$(d)/documents/memes/$(id); }
+
+    match /memes/{id} {
+      allow read: if true;
+      // โพสต์: ต้องอัปเดต users/{uid}.lastPost พร้อมกัน (batch) และห่างจากโพสต์ก่อนหน้า ≥ 60 วินาที
+      allow create: if ok()
+        && request.resource.data.keys().hasOnly(['img','caption','tags','uid','name','photo','createdAt','likeCount','reportCount','hidden'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.img is string && request.resource.data.img.size() < 900000
+        && request.resource.data.caption.size() <= 140
+        && request.resource.data.tags.size() <= 3
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.likeCount == 0 && request.resource.data.reportCount == 0 && request.resource.data.hidden == false
+        && getAfter(/databases/$(d)/documents/users/$(request.auth.uid)).data.lastPost == request.time;
+      // นับไลก์/รายงานได้ทีละ 1 และต้องมีเอกสารไลก์/รายงานของตัวเองสร้าง/ลบพร้อมกันเท่านั้น
+      allow update: if admin() || (ok() && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount']) && (
+          (request.resource.data.likeCount == resource.data.likeCount + 1
+            && !exists(/databases/$(d)/documents/likes/$(id + '_' + request.auth.uid))
+            && existsAfter(/databases/$(d)/documents/likes/$(id + '_' + request.auth.uid)))
+          || (request.resource.data.likeCount == resource.data.likeCount - 1
+            && exists(/databases/$(d)/documents/likes/$(id + '_' + request.auth.uid))
+            && !existsAfter(/databases/$(d)/documents/likes/$(id + '_' + request.auth.uid)))))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reportCount'])
+            && request.resource.data.reportCount == resource.data.reportCount + 1
+            && !exists(/databases/$(d)/documents/reports/$(id + '_' + request.auth.uid))
+            && existsAfter(/databases/$(d)/documents/reports/$(id + '_' + request.auth.uid)))));
+      allow delete: if admin() || (signed() && resource.data.uid == request.auth.uid);
+
+      match /comments/{cid} {
+        allow read: if true;
+        allow create: if ok() && request.resource.data.keys().hasOnly(['uid','name','text','t'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 140
+          && request.resource.data.t == request.time;
+        allow delete: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      }
+    }
+
+    // 1 คน 1 ไลก์ต่อมีม (id = memeId_uid)
+    match /likes/{lid} {
+      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow create: if ok() && lid == request.resource.data.memeId + '_' + request.auth.uid
+        && request.resource.data.keys().hasOnly(['memeId','uid','t'])
+        && request.resource.data.uid == request.auth.uid && request.resource.data.t == request.time
+        && getAfter(mp(request.resource.data.memeId)).data.likeCount == get(mp(request.resource.data.memeId)).data.likeCount + 1;
+      allow delete: if signed() && resource.data.uid == request.auth.uid
+        && getAfter(mp(resource.data.memeId)).data.likeCount == get(mp(resource.data.memeId)).data.likeCount - 1;
+    }
+
+    // 1 คน รายงาน 1 ครั้งต่อมีม พร้อมเหตุผล
+    match /reports/{rid} {
+      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow create: if ok() && rid == request.resource.data.memeId + '_' + request.auth.uid
+        && request.resource.data.keys().hasOnly(['memeId','uid','reason','t'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.reason in ['spam','inappropriate','copyright'] && request.resource.data.t == request.time
+        && getAfter(mp(request.resource.data.memeId)).data.reportCount == get(mp(request.resource.data.memeId)).data.reportCount + 1;
+      allow delete: if admin();
+    }
+
+    match /users/{u} {
+      allow read: if admin() || (signed() && request.auth.uid == u);
+      allow create: if signed() && request.auth.uid == u
+        && request.resource.data.keys().hasOnly(['name','email','photo','lastLogin','lastPost'])
+        && (!('lastPost' in request.resource.data) || request.resource.data.lastPost == request.time);
+      allow update: if admin() || (signed() && request.auth.uid == u
+        && request.resource.data.keys().hasOnly(['name','email','photo','lastLogin','lastPost'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastPost'])
+            || (request.resource.data.lastPost == request.time
+                && (!('lastPost' in resource.data) || request.time > resource.data.lastPost + duration.value(60, 's')))));
+    }
+    match /banned/{u} {
+      allow read, write: if admin();
+    }
+  }
+}

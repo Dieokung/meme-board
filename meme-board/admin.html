@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>หลังบ้าน · มีมบอร์ด</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+.stat{animation:up .5s var(--ease) backwards}.stat b{display:block;font-size:1.6rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}.stat small{color:var(--mut)}
+@keyframes up{from{opacity:0;transform:translateY(14px)}}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button:not(.on){background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.row{display:flex;gap:12px;align-items:center;margin-bottom:10px;animation:up .4s var(--ease) backwards}
+.row img.th{width:64px;height:64px;object-fit:cover;border-radius:10px}
+.row .m{flex:1;min-width:0;display:grid;gap:2px;font-size:.85rem}.row .m b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row small{color:var(--mut)}
+.row .b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-size:.7rem;padding:2px 8px;border-radius:99px;background:var(--line)}
+#gate{text-align:center;padding:60px 16px;display:grid;gap:14px;justify-items:center}
+</style>
+</head>
+<body>
+<header><div class="bar"><a class="logo" href="./">หลังบ้าน <span>มีมบอร์ด</span></a><div class="hact"><a href="./" style="color:var(--mut);font-size:.9rem">กลับหน้าเว็บ</a><button class="ghost sm" id="oBtn" hidden>ออกจากระบบ</button></div></div></header>
+<main>
+  <div id="gate"><p id="gmsg">กำลังตรวจสอบสิทธิ์…</p><button id="lBtn" hidden><b class="g">G</b>เข้าสู่ระบบด้วย Google</button></div>
+  <div id="app" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="tabs"><button class="on" data-v="memes">มีม</button><button data-v="users">ผู้ใช้</button></div>
+    <div class="tabs" id="flt"><button class="sm on" data-f="all">ทั้งหมด</button><button class="sm" data-f="rep">ถูกรายงาน</button><button class="sm" data-f="hid">ที่ซ่อนอยู่</button></div>
+    <div id="list"></div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script type="module" src="admin.js"></script>
+</body>
+</html>

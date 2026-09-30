@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>มีมบอร์ด 🐸</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <div class="sb" id="sb"><div><input id="q" type="search" placeholder="ค้นหาแคปชั่น…"></div></div>
+  <div class="seg"><i class="pill" id="pill"></i>
+    <button class="t on" data-s="new">ล่าสุด</button><button class="t" data-s="top">ยอดนิยม 7 วัน</button><button class="t" data-s="mine">ของฉัน</button></div>
+  <div class="chips" id="chips"></div>
+  <div id="feed"><div class="sk"></div><div class="sk"></div></div>
+  <div id="more"></div>
+  <p class="empty" id="empty" hidden>ยังไม่มีมีมในหมวดนี้ มาเป็นคนแรกที่โพสต์! 😆</p>
+</main>
+<div class="ov" id="ov"><section class="card">
+  <strong>โพสต์มีมของคุณ</strong>
+  <input type="file" id="file" accept="image/*">
+  <img id="prev" alt="" hidden>
+  <input type="text" id="cap" placeholder="แคปชั่นฮาๆ (ไม่บังคับ)" maxlength="140">
+  <small>เลือกแท็กได้สูงสุด 3 อัน</small>
+  <div class="chips wrap" id="ptags"></div>
+  <small id="msg"></small>
+  <div class="acts"><span class="sp"></span><button class="ghost" id="cancel">ยกเลิก</button><button id="send">โพสต์เลย</button></div>
+</section></div>
+<script type="module" src="index.js"></script>
+</body>
+</html>
